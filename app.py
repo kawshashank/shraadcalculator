@@ -50,8 +50,6 @@ def generate_ics(date_obj, name_str):
     event_title = f"Shraad{' for ' + name_str if name_str else ''}"
     start_time = datetime.combine(date_obj, time(8, 0)).astimezone(pytz.utc).strftime('%Y%m%dT%H%M%SZ')
     end_time = datetime.combine(date_obj, time(13, 0)).astimezone(pytz.utc).strftime('%Y%m%dT%H%M%SZ')
-    
-    # FIX: Replaced deprecated utcnow() with timezone-aware datetime.now(pytz.utc)
     timestamp = datetime.now(pytz.utc).strftime('%Y%m%dT%H%M%SZ')
     
     ics_content = f"""BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Kashmiri Shraad Calculator//EN\nBEGIN:VEVENT\nUID:{timestamp}@kashmirishraad.com\nDTSTAMP:{timestamp}\nDTSTART:{start_time}\nDTEND:{end_time}\nSUMMARY:{event_title}\nDESCRIPTION:Calculated via Kashmiri Hindu Shraad Calculator based on Vijayshwar Jantri rules.\nEND:VEVENT\nEND:VCALENDAR""".replace('\n', '\r\n')
@@ -107,10 +105,11 @@ def set_background(png_file):
             color: white !important;
         }}
         .custom-title {{
-            font-size: 2.2rem;
+            font-size: clamp(1.5rem, 5vw, 2.2rem);
             font-weight: 700;
-            white-space: nowrap;
+            white-space: normal; 
             padding-bottom: 0.5rem;
+            line-height: 1.2;
         }}
         .stTabs [data-baseweb="tab-list"] {{
             gap: 8px;
@@ -360,7 +359,8 @@ def find_original_dates(target_year: int, target_month_idx: int, target_tithi_id
 # --- INIT UI & JAVASCRIPT INJECTIONS ---
 set_background('mahadev.jpg')
 
-components.html("""
+# Mobile Keyboard Suppression Fix
+st.markdown("""
 <script>
 (function () {
     function patchSelectInputs() {
@@ -379,7 +379,7 @@ components.html("""
     observer.observe(window.parent.document.body, { childList: true, subtree: true });
 })();
 </script>
-""", height=0, scrolling=False)
+""", unsafe_allow_html=True)
 
 if st.session_state.trigger_tab_switch:
     st.markdown("""
@@ -420,7 +420,8 @@ with tab1:
         target_year = st.number_input("Find Shraad Date for Year", min_value=2024, max_value=2100, value=current_yr, step=1)
         
     with col2:
-        knows_time = st.checkbox("I know the exact time of passing", value=not bool(st.session_state.name1)) 
+        # BUG FIX: Box defaults to False (unchecked) 
+        knows_time = st.checkbox("I know the exact time of passing", value=False) 
         if knows_time:
             st.markdown("<p style='font-size: 0.85rem; margin-bottom: -15px;'>Time of Passing (IST)</p>", unsafe_allow_html=True)
             t_col1, t_col2, t_col3 = st.columns(3)
@@ -441,6 +442,7 @@ with tab1:
 
     st.divider()
 
+    # Layout for Buttons
     b_col1, b_col2 = st.columns([4, 1])
     with b_col1:
         calc_btn = st.button("Calculate Shraad Date", type="primary", use_container_width=True)
@@ -448,11 +450,13 @@ with tab1:
         if st.button("💬 Feedback", use_container_width=True, key="fb_btn_1"):
             feedback_form()
 
+    # Create the calculation key to prevent state reset on download
     input_key = f"{soul_name_1}-{death_date}-{death_time}-{target_year}-{knows_time}"
     
     if calc_btn:
         st.session_state.calc_state = input_key
         
+    # Execute if button was clicked OR if it's currently saved in state
     if st.session_state.calc_state == input_key:
         with st.spinner("Analyzing exact astronomical position..."):
             st.subheader(f"Results for {target_year}")
@@ -477,7 +481,6 @@ with tab1:
                 if shraad_date:
                     st.info(f"📅 **Target Shraad Date{display_name}:** {shraad_date.strftime('%A, %d %B %Y')}")
                     
-                    st.markdown("### Add to Calendar")
                     cal_col1, cal_col2 = st.columns(2)
                     with cal_col1:
                         gcal_url = generate_google_calendar_url(shraad_date, clean_name)
@@ -608,7 +611,7 @@ with tab2:
 st.divider()
 st.markdown("<h3 style='text-align: center; border-bottom: none; margin-top: 0px;'>Share this App</h3>", unsafe_allow_html=True)
 
-APP_URL = "https://kashmiri-shraad-calculator.streamlit.app" # Update with your deployed URL if different
+APP_URL = "https://shraad-alert.streamlit.app" 
 whatsapp_msg = urllib.parse.quote(f"Check out the Kashmiri Shraad Calculator! Save this link to easily find traditional Shraad dates: {APP_URL}")
 fb_url = urllib.parse.quote(APP_URL)
 
