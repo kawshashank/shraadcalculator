@@ -420,7 +420,7 @@ with tab1:
         target_year = st.number_input("Find Shraad Date for Year", min_value=2024, max_value=2100, value=current_yr, step=1)
         
     with col2:
-        # BUG FIX: Box defaults to False (unchecked) 
+        # Checkbox defaults to unchecked (False)
         knows_time = st.checkbox("I know the exact time of passing", value=False) 
         if knows_time:
             st.markdown("<p style='font-size: 0.85rem; margin-bottom: -15px;'>Time of Passing (IST)</p>", unsafe_allow_html=True)
@@ -488,6 +488,14 @@ with tab1:
                     with cal_col2:
                         ics_data = generate_ics(shraad_date, clean_name)
                         st.download_button("📥 Download .ics (Apple / Outlook)", data=ics_data, file_name=f"shraad_{target_year}.ics", mime="text/calendar", use_container_width=True)
+                    
+                    # --- UPCOMING 5 YEARS EXPANDER ---
+                    with st.expander("📅 View Upcoming Shraad Dates (Next 5 Years)", expanded=False):
+                        st.write("Plan ahead! Here is when the Shraad falls in the coming years:")
+                        for next_y in range(target_year + 1, target_year + 6):
+                            ny_date = calculate_target_shraad_date(next_y, month_idx, tithi_idx)
+                            if ny_date:
+                                st.write(f"• **{next_y}:** {ny_date.strftime('%A, %d %B %Y')}")
                 else:
                     st.error("Could not accurately resolve a structural date match.")
                     
@@ -510,6 +518,14 @@ with tab1:
                         ics_data = generate_ics(shraad_pre, clean_name)
                         st.download_button("📥 Download .ics (Apple / Outlook)", data=ics_data, file_name=f"shraad_pre_{target_year}.ics", mime="text/calendar", use_container_width=True, key="ics_pre")
                     
+                    # --- UPCOMING 5 YEARS EXPANDER ---
+                    with st.expander("📅 View Upcoming Shraad Dates (Next 5 Years)", expanded=False):
+                        st.write("Plan ahead! Here is when the Shraad falls in the coming years:")
+                        for next_y in range(target_year + 1, target_year + 6):
+                            ny_date = calculate_target_shraad_date(next_y, m_idx_pre, t_idx_pre)
+                            if ny_date:
+                                st.write(f"• **{next_y}:** {ny_date.strftime('%A, %d %B %Y')}")
+
                 st.write("") 
                 
                 t_idx_post, date_post, _ = resolve_death_tithi(death_date, time(8, 0))
@@ -527,6 +543,14 @@ with tab1:
                     with cal_col2:
                         ics_data = generate_ics(shraad_post, clean_name)
                         st.download_button("📥 Download .ics (Apple / Outlook)", data=ics_data, file_name=f"shraad_post_{target_year}.ics", mime="text/calendar", use_container_width=True, key="ics_post")
+                    
+                    # --- UPCOMING 5 YEARS EXPANDER ---
+                    with st.expander("📅 View Upcoming Shraad Dates (Next 5 Years)", expanded=False):
+                        st.write("Plan ahead! Here is when the Shraad falls in the coming years:")
+                        for next_y in range(target_year + 1, target_year + 6):
+                            ny_date = calculate_target_shraad_date(next_y, m_idx_post, t_idx_post)
+                            if ny_date:
+                                st.write(f"• **{next_y}:** {ny_date.strftime('%A, %d %B %Y')}")
 
 # --- TAB 2: REVERSE LOOKUP CALCULATOR ---
 with tab2:
